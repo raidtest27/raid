@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SECURITAS LAT NITROGEN</title>
+  <style>
+    body { font-family: Helvetica, sans-serif; margin: 0; padding: 0; background: #f4f6f9; }
+    header { background: #228B22; color: white; text-align: center; padding: 25px; position: relative; }
+    header h1 { margin: 0; }
+    nav { display: flex; justify-content: center; gap: 20px; background: #2E8B57; padding: 10px; }
+    nav button { background: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    nav button.active { background: #ffee00; }
+    section { display: none; padding: 20px; }
+    section.active { display: block; }
+    form { display: grid; gap: 10px; margin-bottom: 20px; max-width: 600px; }
+    form input, form select, form button { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+    table, th, td { border: 1px solid #06012e; }
+    th, td { padding: 8px; text-align: left; }
+    th { background-color: #c1d7ec; }
+    button.action-btn { background: #007bff; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 5px; }
+    button.sortie { background: #dc3545; }
+    #badge { border: 3px solid #228B22; border-radius: 15px; padding: 20px; width: 400px; height: 280px; margin-top: 20px; text-align: center; background: #f8f8f8; box-shadow: 0 6px 15px rgba(0,0,0,0.3); position: relative; font-family: 'Arial', sans-serif; }
+    #badge::before { content: 'LAT NITROGEN'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 32px; font-weight: bold; color: rgba(34, 139, 34, 0.1); z-index: 1; pointer-events: none; }
+    #badge > * { position: relative; z-index: 2; }
+    #badge h3 { background: linear-gradient(90deg, #228B22, #2E8B57); color: white; padding: 8px 15px; margin: -20px -20px 15px -20px; border-radius: 12px 12px 0 0; font-size: 18px; }
+    #badge p { font-size: 15px; margin: 8px 0; color: #2d5a2d; font-weight: 600; text-align: left; padding-left: 20px; }
+    #badge .logo-container { position: absolute; top: 50px; right: 15px; width: 80px; height: 80px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 3; }
+    #badge .info-section { margin-top: 20px; text-align: left; width: 280px; }
+    #qrcode-container { position: absolute; bottom: 15px; right: 15px; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 3; }
+    .badge-footer { position: absolute; bottom: 5px; left: 15px; font-size: 10px; color: #666; font-style: italic; }
+    .stats-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+    .chart-container { position: relative; height: 300px; width: 300px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Securitas_AB_logo.svg/512px-Securitas_AB_logo.svg.png" alt="Logo SECURITAS" style="height: 60px; position: absolute; left: 30px; top: 15px;">
+    <img src="https://www.lat-nitrogen.com/images/frontend/borealis-logo-for-mobile.png" alt="LAT NITROGEN" style="height: 60px; position: absolute; right: 30px; top: 15px;">
+    <h1>SECURITAS LAT NITROGEN</h1>
+  </header>
+
+  <nav>
+    <button onclick="showSection('camions', this )" class="active">Camions</button>
+    <button onclick="showSection('stats', this)">Statistiques</button>
+    <button onclick="showSection('visiteurs', this)">Visiteurs</button>
+    <button onclick="showSection('Livraisons', this)">Livraisons</button>
+    <button onclick="showSection('clés', this)">Clés</button>
+  </nav>
+
+  <section id="camions" class="active">
+    <h2>Enregistrement des Camions</h2>
+    <form id="formCamion">
+      <input type="text" id="nom" placeholder="Nom chauffeur" required>
+      <input type="text" id="prenom" placeholder="Prénom chauffeur" required>
+      <input type="text" id="societe" placeholder="Société" required>
+      <input type="text" id="masque" placeholder="N° masque" required>
+      <input type="text" id="plaqueTracteur" placeholder="Plaque de tracteur" required>
+      <input type="text" id="plaqueRemorque" placeholder="Plaque de la remorque" required>
+      <select id="operation"><option value="Chargement">Chargement</option><option value="Déchargement">Déchargement</option></select>
+      <select id="matieres"><option>BIGBAG27</option><option>BIGBAG24</option><option>VRAC27</option><option>VRAC24</option><option>ALCALI</option></select>
+      <button type="submit" class="action-btn">Enregistrer</button>
+    </form>
+    <button onclick="exportExcel()" class="action-btn">Exporter en Excel</button>
+    <table id="tableCamions"><thead><tr><th>Nom</th><th>Prénom</th><th>Société</th><th>Masque</th><th>Plaque Tracteur</th><th>Plaque Remorque</th><th>Opération</th><th>Date</th><th>Action</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="stats">
+    <h2>Tableau de Bord - Statistiques</h2>
+    <div class="stats-grid">
+      <div class="chart-container">
+        <canvas id="statsChart"></canvas>
+      </div>
+      <div>
+        <table id="tableauStatistiques">
+          <thead><tr style="background: #228B22; color: white;"><th>Type d'Activité</th><th>Entrées</th><th>Sorties</th><th>Actuellement Présents</th><th>Mouvements Complets (E/S)</th></tr></thead>
+          <tbody id="statsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="visiteurs">
+    <h2>Gestion des Visiteurs</h2>
+    <form id="formVisiteur">
+      <input type="text" id="vvideo" placeholder="Validité vidéo d'accueil" required>
+      <input type="text" id="vnom" placeholder="Nom" required>
+      <input type="text" id="vprenom" placeholder="Prénom" required>
+      <input type="text" id="vsociete" placeholder="Société" required>
+      <input type="text" id="vperso" placeholder="Personne visitée" required>
+      <button type="submit" class="action-btn">Créer Badge</button>
+    </form>
+    <div id="badge"></div>
+    <button onclick="imprimerBadge()" class="action-btn">Imprimer Badge</button>
+    <table id="tableVisiteurs"><thead><tr><th>Nom</th><th>Prénom</th><th>Société</th><th>Validité vidéo</th><th>Visite</th><th>Date</th><th>Action</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="Livraisons">
+    <h2>Livraisons</h2>
+    <form id="formLivraisons">
+      <input type="text" id="numeroMasque" placeholder="N° de masque" required>
+      <input type="text" id="nomPrenom" placeholder="Nom et prénom chauffeur" required>
+      <input type="text" id="societeLivraison" placeholder="Société" required>
+      <input type="text" id="immatriculation" placeholder="Immatriculation" required>
+      <input type="text" id="destination" placeholder="Destination" required>
+      <button type="submit" class="action-btn">Enregistrer</button>
+    </form>
+    <table id="tableLivraisons"><thead><tr><th>N° Masque</th><th>Nom/Prénom</th><th>Société</th><th>Immat.</th><th>Destination</th><th>Date</th><th>Action</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section id="clés">
+    <h2>Mouvements des Clés</h2>
+    <form id="formCles">
+      <input type="text" id="cnum" placeholder="Numéro de clé" required>
+      <input type="text" id="cnom" placeholder="Nom" required>
+      <input type="text" id="cprenom" placeholder="Prénom" required>
+      <input type="text" id="csociete" placeholder="Société" required>
+      <button type="submit" class="action-btn">Enregistrer</button>
+    </form>
+    <table id="tableCles"><thead><tr><th>N° Clé</th><th>Nom</th><th>Prénom</th><th>Société</th><th>Date</th><th>Action</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script>
+    const DB_PREFIX = 'securitas_db_v6_';
+    const store = {
+      get: (key ) => JSON.parse(localStorage.getItem(DB_PREFIX + key) || '[]'),
+      set: (key, data) => localStorage.setItem(DB_PREFIX + key, JSON.stringify(data)),
+    };
+
+    function showSection(id, element) {
+      document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      if (id === 'stats') updateStatistiques();
+    }
+
+    class AppManager {
+        constructor() {
+            this.sections = {};
+            this.historique = store.get('historique');
+        }
+
+        addSection(key, formId, tableId, fields) {
+            this.sections[key] = {
+                key,
+                form: document.getElementById(formId),
+                table: document.getElementById(tableId)?.querySelector('tbody'),
+                fields,
+                data: store.get(key)
+            };
+
+            const section = this.sections[key];
+            section.form?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.add(key);
+            });
+        }
+
+        add(key) {
+            const section = this.sections[key];
+            const newItem = { type: key, action: 'Entrée', date: new Date().toLocaleString('fr-FR') };
+            section.fields.forEach(field => {
+                const input = document.getElementById(field.formId);
+                if (input) newItem[field.id] = input.value.trim();
+            });
+            
+            newItem.uniqueId = `${key}_${Date.now()}`;
+            section.data.push(newItem);
+            this.historique.push({ ...newItem });
+
+            store.set(key, section.data);
+            store.set('historique', this.historique);
+
+            this.render(key);
+            section.form.reset();
+            updateStatistiques();
+            if (key === 'visiteurs') this.createBadge(newItem);
+        }
+
+        remove(key, index) {
+            const section = this.sections[key];
+            const item = section.data[index];
+            if (item) {
+                this.historique.push({ ...item, action: 'Sortie', date: new Date().toLocaleString('fr-FR') });
+                section.data.splice(index, 1);
+
+                store.set(key, section.data);
+                store.set('historique', this.historique);
+
+                this.render(key);
+                updateStatistiques();
+            }
+        }
+
+        render(key) {
+            const section = this.sections[key];
+            if (!section.table) return;
+            section.table.innerHTML = '';
+            section.data.forEach((item, index) => {
+                const row = section.table.insertRow();
+                section.fields.forEach(field => {
+                    row.insertCell().textContent = item[field.id] || '';
+                });
+                row.insertCell().innerHTML = `<button class="action-btn sortie" onclick="appManager.remove('${key}', ${index})">Sortie</button>`;
+            });
+        }
+
+        renderAll() {
+            for (const key in this.sections) {
+                this.render(key);
+            }
+        }
+
+        createBadge(visiteur) {
+            const badgeDiv = document.getElementById('badge');
+            const qrData = {
+                ID: visiteur.uniqueId, Type: "Visiteur", Nom: visiteur.vnom, Prenom: visiteur.vprenom,
+                Societe: visiteur.vsociete, Contact: visiteur.vperso, Video: visiteur.vvideo, DateEntree: visiteur.date
+            };
+
+            badgeDiv.innerHTML = `
+                <h3>LAT NITROGEN - BADGE VISITEUR</h3>
+                <div class="logo-container"><img src="https://www.lat-nitrogen.com/images/frontend/borealis-logo-for-mobile.png" alt="LAT Nitrogen" style="width: 70px;"></div>
+                <div class="info-section">
+                    <p><strong>Nom:</strong> ${visiteur.vnom}</p><p><strong>Prénom:</strong> ${visiteur.vprenom}</p>
+                    <p><strong>Société:</strong> ${visiteur.vsociete}</p><p><strong>Personne visitée:</strong> ${visiteur.vperso}</p>
+                </div>
+                <div id="qrcode-container"></div><div class="badge-footer">SECURITAS</div>`;
+            
+            const qrContainer = document.getElementById('qrcode-container' );
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, { text: JSON.stringify(qrData, null, 2), width: 100, height: 100, correctLevel: QRCode.CorrectLevel.M });
+        }
+    }
+
+    const appManager = new AppManager();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        appManager.addSection('camions', 'formCamion', 'tableCamions', [{id:'nom',formId:'nom'},{id:'prenom',formId:'prenom'},{id:'societe',formId:'societe'},{id:'masque',formId:'masque'},{id:'plaqueTracteur',formId:'plaqueTracteur'},{id:'plaqueRemorque',formId:'plaqueRemorque'},{id:'operation',formId:'operation'},{id:'date'}]);
+        appManager.addSection('visiteurs', 'formVisiteur', 'tableVisiteurs', [{id:'vnom',formId:'vnom'},{id:'vprenom',formId:'vprenom'},{id:'vsociete',formId:'vsociete'},{id:'vvideo',formId:'vvideo'},{id:'vperso',formId:'vperso'},{id:'date'}]);
+        appManager.addSection('livraisons', 'formLivraisons', 'tableLivraisons', [{id:'numMasque',formId:'numeroMasque'},{id:'nomPrenom',formId:'nomPrenom'},{id:'societe',formId:'societeLivraison'},{id:'immat',formId:'immatriculation'},{id:'destination',formId:'destination'},{id:'date'}]);
+        appManager.addSection('cles', 'formCles', 'tableCles', [{id:'cnum',formId:'cnum'},{id:'cnom',formId:'cnom'},{id:'cprenom',formId:'cprenom'},{id:'csociete',formId:'csociete'},{id:'date'}]);
+        
+        appManager.renderAll();
+        updateStatistiques();
+    });
+
+    let statsChart = null;
+    function getStats() {
+        const historique = store.get('historique');
+        const stats = {};
+
+        for (const key in appManager.sections) {
+            const section = appManager.sections[key];
+            const presents = section.data.length;
+            const entrees = historique.filter(h => h.type === key && h.action === 'Entrée');
+            const sorties = historique.filter(h => h.type === key && h.action === 'Sortie');
+            
+            const entreeIds = new Set(entrees.map(e => e.uniqueId));
+            const sortieIds = new Set(sorties.map(s => s.uniqueId));
+            const mouvementsComplets = [...entreeIds].filter(id => sortieIds.has(id)).length;
+
+            stats[key] = { 
+                presents, entrees: entrees.length, sorties: sorties.length, mouvementsComplets,
+                totalMouvements: entrees.length + sorties.length
+            };
+        }
+        return stats;
+    }
+
+    function updateStatistiques() {
+      const statsTableBody = document.getElementById('statsTableBody');
+      if (!statsTableBody) return;
+      statsTableBody.innerHTML = '';
+      
+      const statsData = getStats();
+
+      for (const key in statsData) {
+        const data = statsData[key];
+        const row = statsTableBody.insertRow();
+        row.innerHTML = `<td>${key.charAt(0).toUpperCase() + key.slice(1)}</td><td>${data.entrees}</td><td>${data.sorties}</td><td>${data.presents}</td><td>${data.mouvementsComplets}</td>`;
+      }
+
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      if (statsChart) statsChart.destroy();
+      statsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(statsData).map(k => k.charAt(0).toUpperCase() + k.slice(1)),
+          datasets: [{
+            label: 'Total Mouvements',
+            data: Object.values(statsData).map(d => d.totalMouvements),
+            backgroundColor: ['#4CAF50', '#FFC107', '#2196F3', '#F44336', '#9C27B0'],
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function exportExcel() {
+        const historique = store.get('historique');
+        const statsData = getStats();
+
+        let csv = "";
+        csv += "RAPPORT D'ACTIVITE SECURITAS LAT NITROGEN\n";
+        csv += `Date d'export: ${new Date().toLocaleString('fr-FR')}\n\n`;
+        
+        csv += "STATISTIQUES GENERALES\n";
+        csv += "Section;Entrees;Sorties;Actuellement sur site;Mouvements Complets (E/S)\n";
+        for (const section in statsData) {
+            const data = statsData[section];
+            csv += `${section.charAt(0).toUpperCase() + section.slice(1)};${data.entrees};${data.sorties};${data.presents};${data.mouvementsComplets}\n`;
+        }
+        csv += "\n";
+
+        csv += "DETAIL DE TOUS LES MOUVEMENTS\n";
+        const headers = ["ID Unique", "Type", "Action", "Date", "Nom", "Prenom", "Societe", "Masque/Video", "Plaque Tracteur", "Plaque Remorque", "Operation", "Contact Visite", "Destination", "Numero Cle"];
+        csv += headers.join(';') + '\n';
+
+        historique.forEach(h => {
+            const row = [
+                h.uniqueId || '', h.type || '', h.action || '', h.date || '',
+                h.nom || h.cnom || (h.nomPrenom ? h.nomPrenom.split(' ')[0] : '') || h.vnom || '',
+                h.prenom || h.cprenom || (h.nomPrenom ? h.nomPrenom.split(' ')[1] : '') || h.vprenom || '',
+                h.societe || h.vsociete || h.csociete || h.societeLivraison || '',
+                h.masque || h.vvideo || h.numMasque || '',
+                h.plaqueTracteur || '', h.plaqueRemorque || '', h.operation || '',
+                h.vperso || '', h.destination || '', h.cnum || ''
+            ];
+            csv += row.map(val => `"${val}"`).join(';') + '\n';
+        });
+
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Rapport-Securitas-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    }
+
+    function imprimerBadge() {
+      const badgeHtml = document.getElementById('badge').innerHTML;
+      const printWindow = window.open('', '', 'height=500,width=700');
+      printWindow.document.write(`<html><head><title>Imprimer Badge</title><style>${document.querySelector('style').innerHTML}</style></head><body><div id="badge">${badgeHtml}</div></body></html>`);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); }, 500);
+    }
+  </script>
+
+</body>
+</html>
